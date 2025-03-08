@@ -2,7 +2,8 @@ package main
 
 import (
 	"log"
-	"net/http" // Update with your module name
+	"net/http"
+	"os"
 	"remote-server-api/pkg/login"
 	"remote-server-api/pkg/server/details"
 	"remote-server-api/pkg/server/details/cpu_info"
@@ -24,7 +25,11 @@ func main() {
 	// docker
 	http.HandleFunc("/docker/container-details", login.TokenValidationMiddleware(docker.GetContainerInfo))
 
-	port := "8080" // Change this to your desired port
-	log.Printf("Server is running on port %s...", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Fallback for local development
+	}
+	addr := ":" + port
+	log.Printf("Starting server on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
