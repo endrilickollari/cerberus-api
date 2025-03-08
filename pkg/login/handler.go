@@ -3,12 +3,12 @@ package login
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
-// LoginHandler handles the login request
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var sshLogin SSHLogin
 

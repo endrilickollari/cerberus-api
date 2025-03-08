@@ -1,0 +1,9 @@
+basePath: /
+host: cerebrus-36046a51eb96.herokuapp.com
+info:
+  contact: {}
+  description: API for Cerebrus
+  title: Cerebrus API
+  version: 1.0.0
+paths: {}
+swagger: "2.0"

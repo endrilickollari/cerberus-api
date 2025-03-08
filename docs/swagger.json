@@ -1,0 +1,12 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for Cerebrus",
+        "title": "Cerebrus API",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "host": "cerebrus-36046a51eb96.herokuapp.com",
+    "basePath": "/",
+    "paths": {}
+}

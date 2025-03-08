@@ -4,15 +4,25 @@ import (
 	"log"
 	"net/http"
 	"os"
+	_ "remote-server-api/docs"
 	"remote-server-api/pkg/login"
 	"remote-server-api/pkg/server/details"
 	"remote-server-api/pkg/server/details/cpu_info"
 	"remote-server-api/pkg/server/details/disk_usage"
 	"remote-server-api/pkg/server/details/running_processes"
 	"remote-server-api/pkg/server/docker"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title Cerebrus API
+// @version 1.0.0
+// @description API for Cerebrus
+// @host cerebrus-36046a51eb96.herokuapp.com
+// @BasePath /
 func main() {
+	// Add Swagger endpoint
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	// login
 	http.HandleFunc("/login", login.LoginHandler)
 
