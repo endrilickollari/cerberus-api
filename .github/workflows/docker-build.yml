@@ -25,7 +25,7 @@ jobs:
           outputs: type=docker,dest=cerebrus.tar
 
       - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cerebrus-docker-image
           path: cerebrus.tar
