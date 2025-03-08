@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-rc-alpine AS builder
 
 LABEL authors="_endrilickollari"
 
