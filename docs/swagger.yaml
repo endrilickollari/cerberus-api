@@ -1,9 +1,112 @@
 basePath: /
+definitions:
+  login.SSHLogin:
+    properties:
+      ip:
+        description: IP address of the SSH server.
+        type: string
+      password:
+        description: Password for SSH login.
+        type: string
+      port:
+        description: Port number for SSH connection (as a string).
+        type: string
+      username:
+        description: Username for SSH login.
+        type: string
+    type: object
+  server_details.ServerDetails:
+    properties:
+      hostname:
+        description: Hostname of the server
+        type: string
+      kernel_version:
+        description: Linux kernel version
+        type: string
+      os:
+        description: Operating system information
+        type: string
+      uptime:
+        description: |-
+          CPUModel          string `json:"cpu_model"`          // CPU model and details
+          CPULoad           string `json:"cpu_load"`           // Current CPU load
+          TotalMemory       string `json:"total_memory"`       // Total memory (RAM)
+          UsedMemory        string `json:"used_memory"`        // Used memory (RAM)
+          FreeMemory        string `json:"free_memory"`        // Free memory (RAM)
+          DiskUsage         string `json:"disk_usage"`         // Disk usage details
+          IPAddresses       string `json:"ip_addresses"`       // Server's IP addresses
+          NetworkInterfaces string `json:"network_interfaces"` // Network interfaces information
+          OpenPorts         string `json:"open_ports"`         // Open ports on the server
+        type: string
+    type: object
 host: cerebrus-36046a51eb96.herokuapp.com
 info:
   contact: {}
   description: API for Cerebrus
   title: Cerebrus API
   version: 1.0.0
-paths: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user against an SSH server and returns a JWT token
+        for subsequent API requests.
+      parameters:
+      - description: SSH login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/login.SSHLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully logged in and token generated
+          schema:
+            additionalProperties:
+              allOf:
+              - type: string
+              - properties:
+                  token:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Failed to connect to SSH server or generate token
+          schema:
+            type: string
+      summary: Login to SSH and generate JWT token
+      tags:
+      - authentication
+  /server-details:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves server details using an authenticated SSH session.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server details
+          schema:
+            $ref: '#/definitions/server_details.ServerDetails'
+        "401":
+          description: Invalid token or session expired
+          schema:
+            type: string
+        "500":
+          description: Failed to get server details
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get server details
+      tags:
+      - server
 swagger: "2.0"

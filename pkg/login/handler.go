@@ -9,6 +9,18 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// LoginHandler handles SSH login requests and generates a JWT token upon successful authentication.
+//
+// @Summary Login to SSH and generate JWT token
+// @Description Authenticates user against an SSH server and returns a JWT token for subsequent API requests.
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param body body SSHLogin true "SSH login credentials"
+// @Success 200 {object} map[string]string{token=string} "Successfully logged in and token generated"
+// @Failure 400 {object} string "Invalid request payload"
+// @Failure 500 {object} string "Failed to connect to SSH server or generate token"
+// @Router /login [post]
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var sshLogin SSHLogin
 
