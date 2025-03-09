@@ -8,5 +8,151 @@
     },
     "host": "cerebrus-36046a51eb96.herokuapp.com",
     "basePath": "/",
-    "paths": {}
+    "paths": {
+        "/login": {
+            "post": {
+                "description": "Authenticates user against an SSH server and returns a JWT token for subsequent API requests.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Login to SSH and generate JWT token",
+                "parameters": [
+                    {
+                        "description": "SSH login credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/login.SSHLogin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged in and token generated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "allOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "token": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to connect to SSH server or generate token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/server-details": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves server details using an authenticated SSH session.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Get server details",
+                "responses": {
+                    "200": {
+                        "description": "Server details",
+                        "schema": {
+                            "$ref": "#/definitions/server_details.ServerDetails"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token or session expired",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get server details",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "login.SSHLogin": {
+            "type": "object",
+            "properties": {
+                "ip": {
+                    "description": "IP address of the SSH server.",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Password for SSH login.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Port number for SSH connection (as a string).",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Username for SSH login.",
+                    "type": "string"
+                }
+            }
+        },
+        "server_details.ServerDetails": {
+            "type": "object",
+            "properties": {
+                "hostname": {
+                    "description": "Hostname of the server",
+                    "type": "string"
+                },
+                "kernel_version": {
+                    "description": "Linux kernel version",
+                    "type": "string"
+                },
+                "os": {
+                    "description": "Operating system information",
+                    "type": "string"
+                },
+                "uptime": {
+                    "description": "CPUModel          string `json:\"cpu_model\"`          // CPU model and details\nCPULoad           string `json:\"cpu_load\"`           // Current CPU load\nTotalMemory       string `json:\"total_memory\"`       // Total memory (RAM)\nUsedMemory        string `json:\"used_memory\"`        // Used memory (RAM)\nFreeMemory        string `json:\"free_memory\"`        // Free memory (RAM)\nDiskUsage         string `json:\"disk_usage\"`         // Disk usage details\nIPAddresses       string `json:\"ip_addresses\"`       // Server's IP addresses\nNetworkInterfaces string `json:\"network_interfaces\"` // Network interfaces information\nOpenPorts         string `json:\"open_ports\"`         // Open ports on the server",
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

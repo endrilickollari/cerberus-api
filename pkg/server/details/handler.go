@@ -11,7 +11,18 @@ import (
 	"strings"
 )
 
-// ServerDetailsHandler handles requests for server details
+// ServerDetailsHandler retrieves and returns server details using an authenticated SSH session.
+//
+// @Summary Get server details
+// @Description Retrieves server details using an authenticated SSH session.
+// @Tags server
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} ServerDetails "Server details"
+// @Failure 401 {object} string "Invalid token or session expired"
+// @Failure 500 {object} string "Failed to get server details"
+// @Router /server-details [post]
 func ServerDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
