@@ -94,6 +94,15 @@ const docTemplate = `{
                     "server"
                 ],
                 "summary": "Get server details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Server details",

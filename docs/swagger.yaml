@@ -89,6 +89,12 @@ paths:
       consumes:
       - application/json
       description: Retrieves server details using an authenticated SSH session.
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
