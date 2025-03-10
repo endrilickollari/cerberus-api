@@ -10,6 +10,19 @@ import (
 	"strings"
 )
 
+// GetCPUInfo retrieves and returns CPU information from the server using an authenticated SSH session.
+//
+// @Summary Get CPU information
+// @Description Retrieves CPU information from the server using an authenticated SSH session.
+// @Tags server
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer <token>"
+// @Success 200 {object} CPUInfo "CPU information"
+// @Failure 401 {object} string "Invalid token or session expired"
+// @Failure 500 {object} string "Failed to get or parse CPU info"
+// @Router /server-details/cpu-info [post]
 func GetCPUInfo(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")

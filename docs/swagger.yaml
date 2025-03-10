@@ -39,6 +39,59 @@ definitions:
           OpenPorts         string `json:"open_ports"`         // Open ports on the server
         type: string
     type: object
+  server_details_cpu_info.CPUInfo:
+    properties:
+      address_sizes:
+        type: string
+      apicid:
+        type: string
+      bogomips:
+        type: string
+      cache_alignment:
+        type: string
+      cache_size:
+        type: string
+      clflush_size:
+        type: string
+      core_id:
+        type: string
+      cpu_cores:
+        type: string
+      cpu_family:
+        type: string
+      cpu_mhz:
+        type: string
+      cpuid_level:
+        type: string
+      flags:
+        type: string
+      fpu:
+        type: string
+      fpu_exception:
+        type: string
+      initial_apicid:
+        type: string
+      microcode:
+        type: string
+      model:
+        type: string
+      model_name:
+        type: string
+      physical_id:
+        type: string
+      power_management:
+        type: string
+      processor:
+        type: string
+      siblings:
+        type: string
+      stepping:
+        type: string
+      vendor_id:
+        type: string
+      wp:
+        type: string
+    type: object
 host: cerebrus-36046a51eb96.herokuapp.com
 info:
   contact: {}
@@ -113,6 +166,38 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get server details
+      tags:
+      - server
+  /server-details/cpu-info:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves CPU information from the server using an authenticated
+        SSH session.
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: CPU information
+          schema:
+            $ref: '#/definitions/server_details_cpu_info.CPUInfo'
+        "401":
+          description: Invalid token or session expired
+          schema:
+            type: string
+        "500":
+          description: Failed to get or parse CPU info
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get CPU information
       tags:
       - server
 swagger: "2.0"

@@ -118,6 +118,55 @@
                     }
                 }
             }
+        },
+        "/server-details/cpu-info": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves CPU information from the server using an authenticated SSH session.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Get CPU information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CPU information",
+                        "schema": {
+                            "$ref": "#/definitions/server_details_cpu_info.CPUInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid token or session expired",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get or parse CPU info",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -159,6 +208,86 @@
                 },
                 "uptime": {
                     "description": "CPUModel          string `json:\"cpu_model\"`          // CPU model and details\nCPULoad           string `json:\"cpu_load\"`           // Current CPU load\nTotalMemory       string `json:\"total_memory\"`       // Total memory (RAM)\nUsedMemory        string `json:\"used_memory\"`        // Used memory (RAM)\nFreeMemory        string `json:\"free_memory\"`        // Free memory (RAM)\nDiskUsage         string `json:\"disk_usage\"`         // Disk usage details\nIPAddresses       string `json:\"ip_addresses\"`       // Server's IP addresses\nNetworkInterfaces string `json:\"network_interfaces\"` // Network interfaces information\nOpenPorts         string `json:\"open_ports\"`         // Open ports on the server",
+                    "type": "string"
+                }
+            }
+        },
+        "server_details_cpu_info.CPUInfo": {
+            "type": "object",
+            "properties": {
+                "address_sizes": {
+                    "type": "string"
+                },
+                "apicid": {
+                    "type": "string"
+                },
+                "bogomips": {
+                    "type": "string"
+                },
+                "cache_alignment": {
+                    "type": "string"
+                },
+                "cache_size": {
+                    "type": "string"
+                },
+                "clflush_size": {
+                    "type": "string"
+                },
+                "core_id": {
+                    "type": "string"
+                },
+                "cpu_cores": {
+                    "type": "string"
+                },
+                "cpu_family": {
+                    "type": "string"
+                },
+                "cpu_mhz": {
+                    "type": "string"
+                },
+                "cpuid_level": {
+                    "type": "string"
+                },
+                "flags": {
+                    "type": "string"
+                },
+                "fpu": {
+                    "type": "string"
+                },
+                "fpu_exception": {
+                    "type": "string"
+                },
+                "initial_apicid": {
+                    "type": "string"
+                },
+                "microcode": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "model_name": {
+                    "type": "string"
+                },
+                "physical_id": {
+                    "type": "string"
+                },
+                "power_management": {
+                    "type": "string"
+                },
+                "processor": {
+                    "type": "string"
+                },
+                "siblings": {
+                    "type": "string"
+                },
+                "stepping": {
+                    "type": "string"
+                },
+                "vendor_id": {
+                    "type": "string"
+                },
+                "wp": {
                     "type": "string"
                 }
             }
