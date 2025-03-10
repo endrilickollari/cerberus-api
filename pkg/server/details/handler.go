@@ -19,6 +19,7 @@ import (
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer <token>"
 // @Success 200 {object} ServerDetails "Server details"
 // @Failure 401 {object} string "Invalid token or session expired"
 // @Failure 500 {object} string "Failed to get server details"
