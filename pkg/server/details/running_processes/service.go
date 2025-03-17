@@ -10,6 +10,18 @@ import (
 	"strings"
 )
 
+// GetRunningProcessesInfo retrieves information about running processes for a user's session.
+//
+// @Summary Get running processes information
+// @Description Retrieves a list of running processes for the user associated with the provided session token.
+// @Tags process
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token for authentication"
+// @Success 200 {array} RunningProcesses "Successfully retrieved running processes details"
+// @Failure 401 {string} string "Invalid token or session expired"
+// @Failure 500 {string} string "Failed to get or parse running processes"
+// @Router /server-details/running-processes [post]
 func GetRunningProcessesInfo(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")

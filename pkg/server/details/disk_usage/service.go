@@ -10,6 +10,18 @@ import (
 	"strings"
 )
 
+// GetDiskUsageInfo retrieves disk usage information for a user's session.
+//
+// @Summary Get disk usage information
+// @Description Retrieves disk usage information for the user associated with the provided session token.
+// @Tags disk
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token for authentication"
+// @Success 200 {array} DiskUsage "Successfully retrieved disk usage details"
+// @Failure 401 {string} string "Invalid token or session expired"
+// @Failure 500 {string} string "Failed to get or parse disk usage"
+// @Router /server-details/disk-usage [post]
 func GetDiskUsageInfo(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
