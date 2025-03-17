@@ -1,12 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API for Cerebrus",
-        "title": "Cerebrus API",
+        "description": "API for Cerberus",
+        "title": "Cerberus API",
         "contact": {},
         "version": "1.0.0"
     },
-    "host": "cerebrus-36046a51eb96.herokuapp.com",
+    "host": "cerberus-api-0773eaec6d0f.herokuapp.com",
     "basePath": "/",
     "paths": {
         "/docker/container-details": {

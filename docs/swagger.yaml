@@ -147,11 +147,11 @@ definitions:
       status:
         type: string
     type: object
-host: cerebrus-36046a51eb96.herokuapp.com
+host: cerberus-api-0773eaec6d0f.herokuapp.com
 info:
   contact: {}
-  description: API for Cerebrus
-  title: Cerebrus API
+  description: API for Cerberus
+  title: Cerberus API
   version: 1.0.0
 paths:
   /docker/container-details:

@@ -529,11 +529,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
-	Host:             "cerebrus-36046a51eb96.herokuapp.com",
+	Host:             "cerberus-api-0773eaec6d0f.herokuapp.com",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Cerebrus API",
-	Description:      "API for Cerebrus",
+	Title:            "Cerberus API",
+	Description:      "API for Cerberus",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
