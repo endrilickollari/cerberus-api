@@ -92,6 +92,61 @@ definitions:
       wp:
         type: string
     type: object
+  server_details_disk_usage.DiskUsage:
+    properties:
+      available:
+        type: string
+      filesystem:
+        type: string
+      mounted_on:
+        type: string
+      size:
+        type: string
+      use_percentage:
+        type: string
+      used:
+        type: string
+    type: object
+  server_details_running_processes.RunningProcesses:
+    properties:
+      command:
+        type: string
+      cpu_consumption:
+        type: string
+      process_id:
+        type: string
+      rss:
+        type: string
+      started:
+        type: string
+      stat:
+        type: string
+      time:
+        type: string
+      tty:
+        type: string
+      user:
+        type: string
+      vsz:
+        type: string
+    type: object
+  server_docker.DockerContainer:
+    properties:
+      command:
+        type: string
+      container_id:
+        type: string
+      created_on:
+        type: string
+      image:
+        type: string
+      names:
+        type: string
+      ports:
+        type: string
+      status:
+        type: string
+    type: object
 host: cerebrus-36046a51eb96.herokuapp.com
 info:
   contact: {}
@@ -99,6 +154,38 @@ info:
   title: Cerebrus API
   version: 1.0.0
 paths:
+  /docker/container-details:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves a list of running Docker containers for the user associated
+        with the provided session token.
+      parameters:
+      - description: Bearer token for authentication
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved Docker container details
+          schema:
+            items:
+              $ref: '#/definitions/server_docker.DockerContainer'
+            type: array
+        "401":
+          description: Invalid token or session expired
+          schema:
+            type: string
+        "500":
+          description: Failed to get or parse Docker containers
+          schema:
+            type: string
+      summary: Get Docker container information
+      tags:
+      - container
   /login:
     post:
       consumes:
@@ -200,4 +287,68 @@ paths:
       summary: Get CPU information
       tags:
       - server
+  /server-details/disk-usage:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves disk usage information for the user associated with the
+        provided session token.
+      parameters:
+      - description: Bearer token for authentication
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved disk usage details
+          schema:
+            items:
+              $ref: '#/definitions/server_details_disk_usage.DiskUsage'
+            type: array
+        "401":
+          description: Invalid token or session expired
+          schema:
+            type: string
+        "500":
+          description: Failed to get or parse disk usage
+          schema:
+            type: string
+      summary: Get disk usage information
+      tags:
+      - disk
+  /server-details/running-processes:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves a list of running processes for the user associated with
+        the provided session token.
+      parameters:
+      - description: Bearer token for authentication
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved running processes details
+          schema:
+            items:
+              $ref: '#/definitions/server_details_running_processes.RunningProcesses'
+            type: array
+        "401":
+          description: Invalid token or session expired
+          schema:
+            type: string
+        "500":
+          description: Failed to get or parse running processes
+          schema:
+            type: string
+      summary: Get running processes information
+      tags:
+      - process
 swagger: "2.0"
