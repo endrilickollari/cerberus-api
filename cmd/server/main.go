@@ -18,7 +18,7 @@ import (
 // @title Cerberus API
 // @version 1.0.0
 // @description API for Cerberus
-// @host cerebrus-36046a51eb96.herokuapp.com
+// @host cerberus-api-0773eaec6d0f.herokuapp.com
 // @BasePath /
 func main() {
 	// Add Swagger endpoint
