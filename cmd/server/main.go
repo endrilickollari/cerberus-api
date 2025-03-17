@@ -15,9 +15,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title Cerebrus API
+// @title Cerberus API
 // @version 1.0.0
-// @description API for Cerebrus
+// @description API for Cerberus
 // @host cerebrus-36046a51eb96.herokuapp.com
 // @BasePath /
 func main() {
