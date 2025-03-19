@@ -1,45 +1,81 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
-	_ "remote-server-api/docs"
-	"remote-server-api/pkg/login"
-	"remote-server-api/pkg/server/details"
-	"remote-server-api/pkg/server/details/cpu_info"
-	"remote-server-api/pkg/server/details/disk_usage"
-	"remote-server-api/pkg/server/details/running_processes"
-	"remote-server-api/pkg/server/docker"
+	"os/signal"
+	"syscall"
+	"time"
 
-	httpSwagger "github.com/swaggo/http-swagger"
+	"remote-server-api/config"
+	"remote-server-api/internal/api/router"
+	"remote-server-api/internal/api/server"
+	"remote-server-api/internal/domain/auth"
+	dockerDomain "remote-server-api/internal/domain/docker"
+	serverDomain "remote-server-api/internal/domain/server"
+	"remote-server-api/internal/infrastructure/persistence/memory"
+	"remote-server-api/internal/infrastructure/ssh"
+	"remote-server-api/internal/infrastructure/token"
+
+	// Import for swagger docs
+	_ "remote-server-api/docs"
 )
 
 // @title Cerberus API
-// @version 1.0.0
-// @description API for Cerberus
-// @host cerberus-api-0773eaec6d0f.herokuapp.com
+// @version 2.0.0
+// @description API for Cerberus - Remote Server Management
+// @host localhost:8080
 // @BasePath /
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
-	// Add Swagger endpoint
-	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
-	// login
-	http.HandleFunc("/login", login.LoginHandler)
+	// Load configuration
+	cfg := config.NewConfig()
 
-	// details
-	http.HandleFunc("/server-details", login.TokenValidationMiddleware(details.ServerDetailsHandler))
-	http.HandleFunc("/server-details/cpu-info", login.TokenValidationMiddleware(cpu_info.GetCPUInfo))
-	http.HandleFunc("/server-details/disk-usage", login.TokenValidationMiddleware(disk_usage.GetDiskUsageInfo))
-	http.HandleFunc("/server-details/running-processes", login.TokenValidationMiddleware(running_processes.GetRunningProcessesInfo))
+	// Setup dependencies
+	tokenService := token.NewJWTService(cfg.JWT.Secret, cfg.JWT.ExpiresIn)
+	sshClient := ssh.NewClient()
 
-	// docker
-	http.HandleFunc("/docker/container-details", login.TokenValidationMiddleware(docker.GetContainerInfo))
+	// Setup repositories
+	sessionRepo := memory.NewSessionRepository()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Fallback for local development
+	// Setup services
+	authService := auth.NewService(sessionRepo, sshClient, tokenService)
+	serverService := serverDomain.NewService(sessionRepo)
+	dockerService := dockerDomain.NewService(sessionRepo)
+
+	// Setup router with all dependencies
+	r := router.New(authService, serverService, dockerService)
+
+	// Initialize HTTP server
+	srv := server.NewServer(r, cfg.Server)
+
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting server on :%s", cfg.Server.Port)
+		log.Printf("Swagger documentation available at: http://localhost:%s/swagger/index.html", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shut down the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	// Create a deadline for server shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
-	addr := ":" + port
-	log.Printf("Starting server on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+
+	log.Println("Server exited properly")
 }
