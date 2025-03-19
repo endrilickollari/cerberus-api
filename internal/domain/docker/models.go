@@ -1,6 +1,7 @@
 package docker
 
-type DockerContainer struct {
+// Container represents a Docker container
+type Container struct {
 	ContainerID string `json:"container_id"`
 	Image       string `json:"image"`
 	Command     string `json:"command"`

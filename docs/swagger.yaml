@@ -1,45 +1,52 @@
 basePath: /
 definitions:
-  login.SSHLogin:
+  auth.LoginRequest:
     properties:
       ip:
-        description: IP address of the SSH server.
         type: string
       password:
-        description: Password for SSH login.
         type: string
       port:
-        description: Port number for SSH connection (as a string).
         type: string
       username:
-        description: Username for SSH login.
         type: string
+    required:
+    - ip
+    - password
+    - port
+    - username
     type: object
-  server_details.ServerDetails:
+  auth.LoginResponse:
     properties:
-      hostname:
-        description: Hostname of the server
-        type: string
-      kernel_version:
-        description: Linux kernel version
-        type: string
-      os:
-        description: Operating system information
-        type: string
-      uptime:
-        description: |-
-          CPUModel          string `json:"cpu_model"`          // CPU model and details
-          CPULoad           string `json:"cpu_load"`           // Current CPU load
-          TotalMemory       string `json:"total_memory"`       // Total memory (RAM)
-          UsedMemory        string `json:"used_memory"`        // Used memory (RAM)
-          FreeMemory        string `json:"free_memory"`        // Free memory (RAM)
-          DiskUsage         string `json:"disk_usage"`         // Disk usage details
-          IPAddresses       string `json:"ip_addresses"`       // Server's IP addresses
-          NetworkInterfaces string `json:"network_interfaces"` // Network interfaces information
-          OpenPorts         string `json:"open_ports"`         // Open ports on the server
+      token:
         type: string
     type: object
-  server_details_cpu_info.CPUInfo:
+  docker.Container:
+    properties:
+      command:
+        type: string
+      container_id:
+        type: string
+      created_on:
+        type: string
+      image:
+        type: string
+      names:
+        type: string
+      ports:
+        type: string
+      status:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  server.CPUInfo:
     properties:
       address_sizes:
         type: string
@@ -92,7 +99,7 @@ definitions:
       wp:
         type: string
     type: object
-  server_details_disk_usage.DiskUsage:
+  server.DiskUsage:
     properties:
       available:
         type: string
@@ -107,7 +114,7 @@ definitions:
       used:
         type: string
     type: object
-  server_details_running_processes.RunningProcesses:
+  server.ProcessInfo:
     properties:
       command:
         type: string
@@ -130,38 +137,31 @@ definitions:
       vsz:
         type: string
     type: object
-  server_docker.DockerContainer:
+  server.ServerDetails:
     properties:
-      command:
+      hostname:
         type: string
-      container_id:
+      kernel_version:
         type: string
-      created_on:
+      os:
         type: string
-      image:
-        type: string
-      names:
-        type: string
-      ports:
-        type: string
-      status:
+      uptime:
         type: string
     type: object
-host: cerberus-api-0773eaec6d0f.herokuapp.com
+host: localhost:8080
 info:
   contact: {}
-  description: API for Cerberus
+  description: API for Cerberus - Remote Server Management
   title: Cerberus API
-  version: 1.0.0
+  version: 2.0.0
 paths:
   /docker/container-details:
-    post:
+    get:
       consumes:
       - application/json
-      description: Retrieves a list of running Docker containers for the user associated
-        with the provided session token.
+      description: Retrieves information about Docker containers from the server
       parameters:
-      - description: Bearer token for authentication
+      - description: Bearer <token>
         in: header
         name: Authorization
         required: true
@@ -170,65 +170,61 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved Docker container details
+          description: Docker container information retrieved successfully
           schema:
             items:
-              $ref: '#/definitions/server_docker.DockerContainer'
+              $ref: '#/definitions/docker.Container'
             type: array
         "401":
-          description: Invalid token or session expired
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to get or parse Docker containers
+          description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Get Docker container information
       tags:
-      - container
+      - docker
   /login:
     post:
       consumes:
       - application/json
       description: Authenticates user against an SSH server and returns a JWT token
-        for subsequent API requests.
+        for subsequent API requests
       parameters:
       - description: SSH login credentials
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/login.SSHLogin'
+          $ref: '#/definitions/auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully logged in and token generated
           schema:
-            additionalProperties:
-              allOf:
-              - type: string
-              - properties:
-                  token:
-                    type: string
-                type: object
-            type: object
+            $ref: '#/definitions/auth.LoginResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
           description: Failed to connect to SSH server or generate token
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
       summary: Login to SSH and generate JWT token
       tags:
       - authentication
   /server-details:
-    post:
+    get:
       consumes:
       - application/json
-      description: Retrieves server details using an authenticated SSH session.
+      description: Retrieves basic server information like hostname, OS, kernel version,
+        etc.
       parameters:
       - description: Bearer <token>
         in: header
@@ -239,28 +235,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: Server details
+          description: Server details retrieved successfully
           schema:
-            $ref: '#/definitions/server_details.ServerDetails'
+            $ref: '#/definitions/server.ServerDetails'
         "401":
-          description: Invalid token or session expired
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to get server details
+          description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
-      summary: Get server details
+      summary: Get basic server details
       tags:
       - server
   /server-details/cpu-info:
-    post:
+    get:
       consumes:
       - application/json
-      description: Retrieves CPU information from the server using an authenticated
-        SSH session.
+      description: Retrieves detailed CPU information from the server
       parameters:
       - description: Bearer <token>
         in: header
@@ -271,30 +266,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: CPU information
+          description: CPU information retrieved successfully
           schema:
-            $ref: '#/definitions/server_details_cpu_info.CPUInfo'
+            items:
+              $ref: '#/definitions/server.CPUInfo'
+            type: array
         "401":
-          description: Invalid token or session expired
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to get or parse CPU info
+          description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
       summary: Get CPU information
       tags:
       - server
   /server-details/disk-usage:
-    post:
+    get:
       consumes:
       - application/json
-      description: Retrieves disk usage information for the user associated with the
-        provided session token.
+      description: Retrieves disk usage information from the server
       parameters:
-      - description: Bearer token for authentication
+      - description: Bearer <token>
         in: header
         name: Authorization
         required: true
@@ -303,30 +299,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved disk usage details
+          description: Disk usage information retrieved successfully
           schema:
             items:
-              $ref: '#/definitions/server_details_disk_usage.DiskUsage'
+              $ref: '#/definitions/server.DiskUsage'
             type: array
         "401":
-          description: Invalid token or session expired
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to get or parse disk usage
+          description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Get disk usage information
       tags:
-      - disk
+      - server
   /server-details/running-processes:
-    post:
+    get:
       consumes:
       - application/json
-      description: Retrieves a list of running processes for the user associated with
-        the provided session token.
+      description: Retrieves information about running processes on the server
       parameters:
-      - description: Bearer token for authentication
+      - description: Bearer <token>
         in: header
         name: Authorization
         required: true
@@ -335,20 +332,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved running processes details
+          description: Running processes information retrieved successfully
           schema:
             items:
-              $ref: '#/definitions/server_details_running_processes.RunningProcesses'
+              $ref: '#/definitions/server.ProcessInfo'
             type: array
         "401":
-          description: Invalid token or session expired
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to get or parse running processes
+          description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Get running processes information
       tags:
-      - process
+      - server
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

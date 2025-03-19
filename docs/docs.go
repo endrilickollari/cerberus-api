@@ -16,8 +16,13 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/docker/container-details": {
-            "post": {
-                "description": "Retrieves a list of running Docker containers for the user associated with the provided session token.",
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves information about Docker containers from the server",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,13 +30,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "container"
+                    "docker"
                 ],
                 "summary": "Get Docker container information",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authentication",
+                        "description": "Bearer \u003ctoken\u003e",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -39,24 +44,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved Docker container details",
+                        "description": "Docker container information retrieved successfully",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/server_docker.DockerContainer"
+                                "$ref": "#/definitions/docker.Container"
                             }
                         }
                     },
                     "401": {
-                        "description": "Invalid token or session expired",
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Failed to get or parse Docker containers",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -64,7 +69,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Authenticates user against an SSH server and returns a JWT token for subsequent API requests.",
+                "description": "Authenticates user against an SSH server and returns a JWT token for subsequent API requests",
                 "consumes": [
                     "application/json"
                 ],
@@ -82,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/login.SSHLogin"
+                            "$ref": "#/definitions/auth.LoginRequest"
                         }
                     }
                 ],
@@ -90,47 +95,32 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully logged in and token generated",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "allOf": [
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "token": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
+                            "$ref": "#/definitions/auth.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to connect to SSH server or generate token",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
         "/server-details": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Retrieves server details using an authenticated SSH session.",
+                "description": "Retrieves basic server information like hostname, OS, kernel version, etc.",
                 "consumes": [
                     "application/json"
                 ],
@@ -140,7 +130,7 @@ const docTemplate = `{
                 "tags": [
                     "server"
                 ],
-                "summary": "Get server details",
+                "summary": "Get basic server details",
                 "parameters": [
                     {
                         "type": "string",
@@ -152,34 +142,34 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Server details",
+                        "description": "Server details retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/server_details.ServerDetails"
+                            "$ref": "#/definitions/server.ServerDetails"
                         }
                     },
                     "401": {
-                        "description": "Invalid token or session expired",
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Failed to get server details",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
         "/server-details/cpu-info": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Retrieves CPU information from the server using an authenticated SSH session.",
+                "description": "Retrieves detailed CPU information from the server",
                 "consumes": [
                     "application/json"
                 ],
@@ -201,29 +191,37 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "CPU information",
+                        "description": "CPU information retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/server_details_cpu_info.CPUInfo"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.CPUInfo"
+                            }
                         }
                     },
                     "401": {
-                        "description": "Invalid token or session expired",
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Failed to get or parse CPU info",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
         "/server-details/disk-usage": {
-            "post": {
-                "description": "Retrieves disk usage information for the user associated with the provided session token.",
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves disk usage information from the server",
                 "consumes": [
                     "application/json"
                 ],
@@ -231,13 +229,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "disk"
+                    "server"
                 ],
                 "summary": "Get disk usage information",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authentication",
+                        "description": "Bearer \u003ctoken\u003e",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -245,32 +243,37 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved disk usage details",
+                        "description": "Disk usage information retrieved successfully",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/server_details_disk_usage.DiskUsage"
+                                "$ref": "#/definitions/server.DiskUsage"
                             }
                         }
                     },
                     "401": {
-                        "description": "Invalid token or session expired",
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Failed to get or parse disk usage",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
         "/server-details/running-processes": {
-            "post": {
-                "description": "Retrieves a list of running processes for the user associated with the provided session token.",
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves information about running processes on the server",
                 "consumes": [
                     "application/json"
                 ],
@@ -278,13 +281,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "process"
+                    "server"
                 ],
                 "summary": "Get running processes information",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authentication",
+                        "description": "Bearer \u003ctoken\u003e",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -292,24 +295,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved running processes details",
+                        "description": "Running processes information retrieved successfully",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/server_details_running_processes.RunningProcesses"
+                                "$ref": "#/definitions/server.ProcessInfo"
                             }
                         }
                     },
                     "401": {
-                        "description": "Invalid token or session expired",
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Failed to get or parse running processes",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -317,49 +320,76 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "login.SSHLogin": {
+        "auth.LoginRequest": {
             "type": "object",
+            "required": [
+                "ip",
+                "password",
+                "port",
+                "username"
+            ],
             "properties": {
                 "ip": {
-                    "description": "IP address of the SSH server.",
                     "type": "string"
                 },
                 "password": {
-                    "description": "Password for SSH login.",
                     "type": "string"
                 },
                 "port": {
-                    "description": "Port number for SSH connection (as a string).",
                     "type": "string"
                 },
                 "username": {
-                    "description": "Username for SSH login.",
                     "type": "string"
                 }
             }
         },
-        "server_details.ServerDetails": {
+        "auth.LoginResponse": {
             "type": "object",
             "properties": {
-                "hostname": {
-                    "description": "Hostname of the server",
-                    "type": "string"
-                },
-                "kernel_version": {
-                    "description": "Linux kernel version",
-                    "type": "string"
-                },
-                "os": {
-                    "description": "Operating system information",
-                    "type": "string"
-                },
-                "uptime": {
-                    "description": "CPUModel          string ` + "`" + `json:\"cpu_model\"` + "`" + `          // CPU model and details\nCPULoad           string ` + "`" + `json:\"cpu_load\"` + "`" + `           // Current CPU load\nTotalMemory       string ` + "`" + `json:\"total_memory\"` + "`" + `       // Total memory (RAM)\nUsedMemory        string ` + "`" + `json:\"used_memory\"` + "`" + `        // Used memory (RAM)\nFreeMemory        string ` + "`" + `json:\"free_memory\"` + "`" + `        // Free memory (RAM)\nDiskUsage         string ` + "`" + `json:\"disk_usage\"` + "`" + `         // Disk usage details\nIPAddresses       string ` + "`" + `json:\"ip_addresses\"` + "`" + `       // Server's IP addresses\nNetworkInterfaces string ` + "`" + `json:\"network_interfaces\"` + "`" + ` // Network interfaces information\nOpenPorts         string ` + "`" + `json:\"open_ports\"` + "`" + `         // Open ports on the server",
+                "token": {
                     "type": "string"
                 }
             }
         },
-        "server_details_cpu_info.CPUInfo": {
+        "docker.Container": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "string"
+                },
+                "container_id": {
+                    "type": "string"
+                },
+                "created_on": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "names": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "server.CPUInfo": {
             "type": "object",
             "properties": {
                 "address_sizes": {
@@ -439,7 +469,7 @@ const docTemplate = `{
                 }
             }
         },
-        "server_details_disk_usage.DiskUsage": {
+        "server.DiskUsage": {
             "type": "object",
             "properties": {
                 "available": {
@@ -462,7 +492,7 @@ const docTemplate = `{
                 }
             }
         },
-        "server_details_running_processes.RunningProcesses": {
+        "server.ProcessInfo": {
             "type": "object",
             "properties": {
                 "command": {
@@ -497,43 +527,41 @@ const docTemplate = `{
                 }
             }
         },
-        "server_docker.DockerContainer": {
+        "server.ServerDetails": {
             "type": "object",
             "properties": {
-                "command": {
+                "hostname": {
                     "type": "string"
                 },
-                "container_id": {
+                "kernel_version": {
                     "type": "string"
                 },
-                "created_on": {
+                "os": {
                     "type": "string"
                 },
-                "image": {
-                    "type": "string"
-                },
-                "names": {
-                    "type": "string"
-                },
-                "ports": {
-                    "type": "string"
-                },
-                "status": {
+                "uptime": {
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.0",
-	Host:             "cerberus-api-0773eaec6d0f.herokuapp.com",
+	Version:          "2.0.0",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Cerberus API",
-	Description:      "API for Cerberus",
+	Description:      "API for Cerberus - Remote Server Management",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

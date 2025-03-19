@@ -1,6 +1,14 @@
-package cpu_info
+package server
 
-// CPUInfo struct for CPU details
+// ServerDetails contains basic information about the server
+type ServerDetails struct {
+	Hostname      string `json:"hostname"`
+	OS            string `json:"os"`
+	KernelVersion string `json:"kernel_version"`
+	Uptime        string `json:"uptime"`
+}
+
+// CPUInfo contains detailed information about a CPU core
 type CPUInfo struct {
 	Processor       string `json:"processor"`
 	VendorID        string `json:"vendor_id"`
@@ -27,4 +35,28 @@ type CPUInfo struct {
 	CacheAlignment  string `json:"cache_alignment"`
 	AddressSizes    string `json:"address_sizes"`
 	PowerManagement string `json:"power_management"`
+}
+
+// DiskUsage contains information about disk usage
+type DiskUsage struct {
+	Filesystem    string `json:"filesystem"`
+	Size          string `json:"size"`
+	Used          string `json:"used"`
+	Available     string `json:"available"`
+	UsePercentage string `json:"use_percentage"`
+	MountedOn     string `json:"mounted_on"`
+}
+
+// ProcessInfo contains information about a running process
+type ProcessInfo struct {
+	User  string `json:"user"`
+	PID   string `json:"process_id"`
+	CPU   string `json:"cpu_consumption"`
+	VSZ   string `json:"vsz"`
+	RSS   string `json:"rss"`
+	TTY   string `json:"tty"`
+	Stat  string `json:"stat"`
+	Start string `json:"started"`
+	Time  string `json:"time"`
+	CMD   string `json:"command"`
 }
