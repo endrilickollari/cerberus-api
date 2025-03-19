@@ -171,3 +171,41 @@ func (h *ServerHandler) GetRunningProcesses(w http.ResponseWriter, r *http.Reque
 	// Return the running processes
 	response.JSON(w, processes, http.StatusOK)
 }
+
+// GetInstalledLibraries returns information about installed libraries
+//
+// @Summary Get installed libraries information
+// @Description Retrieves information about installed libraries and packages on the server
+// @Tags server
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer <token>"
+// @Success 200 {array} server.Library "Installed libraries information retrieved successfully"
+// @Failure 401 {object} response.Response "Unauthorized"
+// @Failure 500 {object} response.Response "Internal server error"
+// @Router /server-details/libraries [get]
+func (h *ServerHandler) GetInstalledLibraries(w http.ResponseWriter, r *http.Request) {
+	// Get session ID from context
+	sessionID, ok := r.Context().Value(SessionIDKey).(string)
+	if !ok {
+		response.Error(w, "Session not found", http.StatusUnauthorized)
+		return
+	}
+
+	// Get installed libraries
+	libraries, err := h.serverService.GetInstalledLibraries(r.Context(), sessionID)
+	if err != nil {
+		// Handle specific errors
+		switch {
+		case errors.Is(err, server.ErrSessionNotFound):
+			response.Error(w, "Session expired or not found", http.StatusUnauthorized)
+		default:
+			response.Error(w, "Failed to get installed libraries: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Return the installed libraries
+	response.JSON(w, libraries, http.StatusOK)
+}

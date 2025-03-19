@@ -31,6 +31,9 @@ type Service interface {
 
 	// GetRunningProcesses retrieves information about running processes
 	GetRunningProcesses(ctx context.Context, sessionID string) ([]ProcessInfo, error)
+
+	// GetInstalledLibraries retrieves information about installed libraries
+	GetInstalledLibraries(ctx context.Context, sessionID string) ([]Library, error)
 }
 
 type service struct {
@@ -265,4 +268,114 @@ func parseProcessInfo(psOutput string) []ProcessInfo {
 	}
 
 	return processes
+}
+
+// parseLibrariesInfo parses the output of package manager queries
+func parseLibrariesInfo(librariesOutput string) []Library {
+	var libraries []Library
+	lines := strings.Split(librariesOutput, "\n")
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		// Split the line by spaces
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			continue
+		}
+
+		// Parse fields based on standard format
+		name := fields[0]
+		version := fields[1]
+
+		// Set default values
+		status := "unknown"
+		arch := "unknown"
+
+		// Check for status (may be formatted differently based on package manager)
+		if len(fields) >= 4 && strings.Contains(fields[2], "install") {
+			status = "installed"
+			if len(fields) >= 4 {
+				arch = fields[3]
+			}
+		} else if len(fields) >= 3 {
+			if strings.Contains(fields[2], "install") {
+				status = "installed"
+				if len(fields) >= 4 {
+					arch = fields[3]
+				}
+			} else {
+				// Last field could be architecture
+				arch = fields[2]
+			}
+		}
+
+		library := Library{
+			Name:    name,
+			Version: version,
+			Status:  status,
+			Arch:    arch,
+		}
+
+		libraries = append(libraries, library)
+	}
+
+	return libraries
+}
+
+// GetInstalledLibraries implements the Service interface
+func (s *service) GetInstalledLibraries(ctx context.Context, sessionID string) ([]Library, error) {
+	// Try to detect the Linux distribution
+	distroCmd := "cat /etc/os-release | grep -E '^ID=' | cut -d'=' -f2 | tr -d '\"'"
+	distro, err := s.sessionRepo.RunCommand(ctx, sessionID, distroCmd)
+	if err != nil {
+		// Fallback if we can't detect the distribution
+		distro = ""
+	}
+	distro = strings.TrimSpace(distro)
+
+	var command string
+	switch strings.ToLower(distro) {
+	case "ubuntu", "debian", "pop", "mint", "elementary", "kali", "zorin":
+		// Debian-based distributions
+		command = "dpkg-query -W -f='${Package} ${Version} ${Status} ${Architecture}\n'"
+	case "fedora", "rhel", "centos", "rocky", "alma":
+		// Red Hat-based distributions
+		command = "rpm -qa --queryformat '%{NAME} %{VERSION} installed %{ARCH}\n'"
+	case "arch", "manjaro", "endeavouros":
+		// Arch-based distributions
+		command = "pacman -Q | awk '{print $1 \" \" $2 \" installed \"}'$(uname -m)"
+	case "opensuse", "suse":
+		// SUSE-based distributions
+		command = "rpm -qa --queryformat '%{NAME} %{VERSION} installed %{ARCH}\n'"
+	default:
+		// Try to detect package manager if distro detection failed
+		aptCheck, _ := s.sessionRepo.RunCommand(ctx, sessionID, "which apt &>/dev/null && echo found || echo not found")
+		if strings.Contains(aptCheck, "found") {
+			command = "dpkg-query -W -f='${Package} ${Version} ${Status} ${Architecture}\n'"
+		} else {
+			rpmCheck, _ := s.sessionRepo.RunCommand(ctx, sessionID, "which rpm &>/dev/null && echo found || echo not found")
+			if strings.Contains(rpmCheck, "found") {
+				command = "rpm -qa --queryformat '%{NAME} %{VERSION} installed %{ARCH}\n'"
+			} else {
+				pacmanCheck, _ := s.sessionRepo.RunCommand(ctx, sessionID, "which pacman &>/dev/null && echo found || echo not found")
+				if strings.Contains(pacmanCheck, "found") {
+					command = "pacman -Q | awk '{print $1 \" \" $2 \" installed \"}'$(uname -m)"
+				} else {
+					return nil, errors.New("could not detect a supported package manager")
+				}
+			}
+		}
+	}
+
+	// Execute the appropriate command based on the detected distribution/package manager
+	librariesOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, command)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse the libraries info
+	return parseLibrariesInfo(librariesOutput), nil
 }

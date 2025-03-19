@@ -68,6 +68,7 @@ func New(
 			r.Get("/cpu-info", serverHandler.GetCPUInfo)
 			r.Get("/disk-usage", serverHandler.GetDiskUsage)
 			r.Get("/running-processes", serverHandler.GetRunningProcesses)
+			r.Get("/libraries", serverHandler.GetInstalledLibraries)
 		})
 
 		// Docker routes
