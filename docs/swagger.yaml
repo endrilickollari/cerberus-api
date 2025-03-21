@@ -114,6 +114,17 @@ definitions:
       used:
         type: string
     type: object
+  server.Library:
+    properties:
+      architecture:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
   server.ProcessInfo:
     properties:
       command:
@@ -315,6 +326,40 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get disk usage information
+      tags:
+      - server
+  /server-details/libraries:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves information about installed libraries and packages on
+        the server
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Installed libraries information retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/server.Library'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get installed libraries information
       tags:
       - server
   /server-details/running-processes:
