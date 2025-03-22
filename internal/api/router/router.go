@@ -45,6 +45,7 @@ func New(
 	authHandler := handlers.NewAuthHandler(authService)
 	serverHandler := handlers.NewServerHandler(serverService)
 	dockerHandler := handlers.NewDockerHandler(dockerService)
+	fileSystemHandler := handlers.NewFileSystemHandler(serverService)
 
 	// Authentication middleware
 	authMiddleware := handlers.NewAuthMiddleware(authService)
@@ -74,6 +75,13 @@ func New(
 		// Docker routes
 		r.Route("/docker", func(r chi.Router) {
 			r.Get("/container-details", dockerHandler.GetContainerInfo)
+		})
+
+		// Docker routes
+		r.Route("/filesystem", func(r chi.Router) {
+			r.Get("/list", fileSystemHandler.ListFileSystem)
+			r.Get("/details", fileSystemHandler.GetFileDetails)
+			r.Get("/search", fileSystemHandler.SearchFiles)
 		})
 	})
 

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -34,6 +35,15 @@ type Service interface {
 
 	// GetInstalledLibraries retrieves information about installed libraries
 	GetInstalledLibraries(ctx context.Context, sessionID string) ([]Library, error)
+
+	// ListFileSystem retrieves a listing of files and directories
+	ListFileSystem(ctx context.Context, sessionID string, path string, recursive bool, includeHidden bool) (*FileSystemListing, error)
+
+	// GetFileDetails retrieves detailed information about a specific file or directory
+	GetFileDetails(ctx context.Context, sessionID string, path string) (*FileSystemEntry, error)
+
+	// SearchFiles searches for files matching a pattern
+	SearchFiles(ctx context.Context, sessionID string, path string, pattern string, maxDepth int) ([]FileSystemEntry, error)
 }
 
 type service struct {
@@ -378,4 +388,138 @@ func (s *service) GetInstalledLibraries(ctx context.Context, sessionID string) (
 
 	// Parse the libraries info
 	return parseLibrariesInfo(librariesOutput), nil
+}
+
+// ListFileSystem implements the Service interface
+func (s *service) ListFileSystem(ctx context.Context, sessionID string, path string, recursive bool, includeHidden bool) (*FileSystemListing, error) {
+	// Sanitize the path to prevent command injection
+	sanitizedPath := strings.Trim(sanitizePath(path), "'")
+
+	var entries []FileSystemEntry
+	var err error
+
+	// Get directory contents based on recursive flag
+	if recursive {
+		entries, err = getRecursiveDirectoryContents(ctx, s.sessionRepo, sessionID, sanitizedPath, includeHidden)
+	} else {
+		entries, err = getNonRecursiveDirectoryContents(ctx, s.sessionRepo, sessionID, sanitizedPath, includeHidden)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	// Create the file system listing result
+	result := &FileSystemListing{
+		Path:      sanitizedPath,
+		Entries:   entries,
+		Recursive: recursive,
+	}
+
+	return result, nil
+}
+
+// GetFileDetails implements the Service interface
+func (s *service) GetFileDetails(ctx context.Context, sessionID string, path string) (*FileSystemEntry, error) {
+	// Sanitize the path to prevent command injection
+	sanitizedPath := strings.Trim(sanitizePath(path), "'")
+
+	// Get detailed file information
+	fileInfo, err := getEnhancedFileInfo(ctx, s.sessionRepo, sessionID, sanitizedPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file details: %w", err)
+	}
+
+	// For files, get additional information such as mime type and a preview (for text files)
+	if fileInfo.Type == "file" {
+		// Get file mime type
+		mimeTypeCmd := fmt.Sprintf("file --mime-type -b %s", sanitizePath(sanitizedPath))
+		mimeTypeOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, mimeTypeCmd)
+		if err == nil {
+			fileInfo.MimeType = strings.TrimSpace(mimeTypeOutput)
+
+			// If it's a text file, get a preview (first 10 lines)
+			if strings.HasPrefix(fileInfo.MimeType, "text/") {
+				previewCmd := fmt.Sprintf("head -n 10 %s", sanitizePath(sanitizedPath))
+				previewOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, previewCmd)
+				if err == nil {
+					fileInfo.Preview = previewOutput
+				}
+			}
+		}
+	}
+
+	return fileInfo, nil
+}
+
+// SearchFiles implements the Service interface
+func (s *service) SearchFiles(ctx context.Context, sessionID string, path string, pattern string, maxDepth int) ([]FileSystemEntry, error) {
+	// Sanitize the path and pattern to prevent command injection
+	sanitizedPath := strings.Trim(sanitizePath(path), "'")
+	sanitizedPattern := strings.ReplaceAll(pattern, "'", "'\\''") // Escape single quotes
+
+	// Build the find command for searching files
+	// The -maxdepth parameter limits the search depth to avoid searching the entire filesystem
+	// We're searching for files that match the pattern in either their name or content
+	findNameCmd := fmt.Sprintf("find %s -maxdepth %d -type f -name '*%s*' -o -type d -name '*%s*'",
+		sanitizePath(sanitizedPath), maxDepth, sanitizedPattern, sanitizedPattern)
+
+	// Execute the find command
+	nameOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, findNameCmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search files by name: %w", err)
+	}
+
+	// For content search (grep), we'll search only in text files for the pattern
+	// This can be resource-intensive, so we'll limit it to files within the maxdepth
+	grepCmd := fmt.Sprintf("find %s -maxdepth %d -type f -exec grep -l '%s' {} \\; 2>/dev/null",
+		sanitizePath(sanitizedPath), maxDepth, sanitizedPattern)
+
+	// Execute the grep command
+	contentOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, grepCmd)
+	// We don't check for error here as grep might return non-zero if no matches are found
+
+	// Combine and deduplicate the results
+	var allPaths []string
+
+	// Process the name search results
+	if nameOutput != "" {
+		namePaths := strings.Split(nameOutput, "\n")
+		for _, path := range namePaths {
+			if path != "" {
+				allPaths = append(allPaths, path)
+			}
+		}
+	}
+
+	// Process the content search results
+	if contentOutput != "" {
+		contentPaths := strings.Split(contentOutput, "\n")
+		for _, path := range contentPaths {
+			if path != "" {
+				found := false
+				for _, existingPath := range allPaths {
+					if existingPath == path {
+						found = true
+						break
+					}
+				}
+				if !found {
+					allPaths = append(allPaths, path)
+				}
+			}
+		}
+	}
+
+	// Get detailed information for each found file/directory
+	var entries []FileSystemEntry
+	for _, filePath := range allPaths {
+		fileInfo, err := getEnhancedFileInfo(ctx, s.sessionRepo, sessionID, filePath)
+		if err != nil {
+			continue
+		}
+		entries = append(entries, *fileInfo)
+	}
+
+	return entries, nil
 }
