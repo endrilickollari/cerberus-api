@@ -61,6 +61,194 @@
                 }
             }
         },
+        "/docker/container/{container_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed information about a specific Docker container using docker inspect",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Get detailed Docker container information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Container ID",
+                        "name": "container_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Docker container details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/docker.ContainerDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid container ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Container not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/docker/image/{image_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed information about a specific Docker image using docker image inspect",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Get detailed Docker image information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Image ID or name:tag",
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Docker image details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/docker.ImageDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid image ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Image not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/docker/images": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves information about all Docker images on the server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Get Docker images",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Docker images retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/docker.Image"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/filesystem/details": {
             "get": {
                 "security": [
@@ -623,6 +811,342 @@
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.ContainerDetail": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created": {
+                    "type": "string"
+                },
+                "host_config": {
+                    "$ref": "#/definitions/docker.HostConfig"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/docker.Mount"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_mode": {
+                    "type": "string"
+                },
+                "network_settings": {
+                    "$ref": "#/definitions/docker.NetworkSettings"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "restart_policy": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/docker.ContainerState"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.ContainerState": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "exit_code": {
+                    "type": "integer"
+                },
+                "finished_at": {
+                    "type": "string"
+                },
+                "paused": {
+                    "type": "boolean"
+                },
+                "restarting": {
+                    "type": "boolean"
+                },
+                "running": {
+                    "type": "boolean"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.HostConfig": {
+            "type": "object",
+            "properties": {
+                "auto_remove": {
+                    "type": "boolean"
+                },
+                "cap_add": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cap_drop": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "privileged": {
+                    "type": "boolean"
+                },
+                "publish_all_ports": {
+                    "type": "boolean"
+                },
+                "restart_policy": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.Image": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "string"
+                },
+                "digest": {
+                    "type": "string"
+                },
+                "image_id": {
+                    "type": "string"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "vulnerability": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.ImageDetail": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "type": "string"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "cmd": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "container": {
+                    "type": "string"
+                },
+                "created": {
+                    "type": "string"
+                },
+                "docker_version": {
+                    "type": "string"
+                },
+                "entrypoint": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "env": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exposed_ports": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object"
+                    }
+                },
+                "history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/docker.ImageHistory"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "os": {
+                    "type": "string"
+                },
+                "repo_digests": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "repo_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "shared_size": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "virtual_size": {
+                    "type": "integer"
+                },
+                "volumes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object"
+                    }
+                },
+                "working_dir": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.ImageHistory": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "created": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "empty_layer": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "docker.Mount": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "rw": {
+                    "type": "boolean"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.NetworkSettings": {
+            "type": "object",
+            "properties": {
+                "endpoint_id": {
+                    "type": "string"
+                },
+                "gateway": {
+                    "type": "string"
+                },
+                "ip_address": {
+                    "type": "string"
+                },
+                "mac_address": {
+                    "type": "string"
+                },
+                "network_id": {
+                    "type": "string"
+                },
+                "network_name": {
+                    "type": "string"
+                },
+                "port_mappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/docker.PortMapping"
+                    }
+                },
+                "subnet_mask": {
+                    "type": "string"
+                },
+                "subnet_prefix": {
+                    "type": "string"
+                }
+            }
+        },
+        "docker.PortMapping": {
+            "type": "object",
+            "properties": {
+                "container_port": {
+                    "type": "string"
+                },
+                "host_port": {
+                    "type": "string"
+                },
+                "protocol": {
                     "type": "string"
                 }
             }

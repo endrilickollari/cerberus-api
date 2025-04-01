@@ -74,7 +74,10 @@ func New(
 
 		// Docker routes
 		r.Route("/docker", func(r chi.Router) {
-			r.Get("/container-details", dockerHandler.GetContainerInfo)
+			r.Get("/containers", dockerHandler.GetContainerInfo)
+			r.Get("/container/{container_id}", dockerHandler.GetContainerDetail)
+			r.Get("/images", dockerHandler.GetImages)
+			r.Get("/image/{image_id}", dockerHandler.GetImageDetail)
 		})
 
 		// Docker routes

@@ -38,6 +38,227 @@ definitions:
       status:
         type: string
     type: object
+  docker.ContainerDetail:
+    properties:
+      command:
+        items:
+          type: string
+        type: array
+      created:
+        type: string
+      host_config:
+        $ref: '#/definitions/docker.HostConfig'
+      id:
+        type: string
+      image:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      mounts:
+        items:
+          $ref: '#/definitions/docker.Mount'
+        type: array
+      name:
+        type: string
+      network_mode:
+        type: string
+      network_settings:
+        $ref: '#/definitions/docker.NetworkSettings'
+      platform:
+        type: string
+      ports:
+        additionalProperties:
+          type: string
+        type: object
+      restart_policy:
+        type: string
+      state:
+        $ref: '#/definitions/docker.ContainerState'
+      status:
+        type: string
+    type: object
+  docker.ContainerState:
+    properties:
+      error:
+        type: string
+      exit_code:
+        type: integer
+      finished_at:
+        type: string
+      paused:
+        type: boolean
+      restarting:
+        type: boolean
+      running:
+        type: boolean
+      started_at:
+        type: string
+      status:
+        type: string
+    type: object
+  docker.HostConfig:
+    properties:
+      auto_remove:
+        type: boolean
+      cap_add:
+        items:
+          type: string
+        type: array
+      cap_drop:
+        items:
+          type: string
+        type: array
+      dns:
+        items:
+          type: string
+        type: array
+      privileged:
+        type: boolean
+      publish_all_ports:
+        type: boolean
+      restart_policy:
+        type: string
+    type: object
+  docker.Image:
+    properties:
+      created:
+        type: string
+      digest:
+        type: string
+      image_id:
+        type: string
+      repository:
+        type: string
+      size:
+        type: string
+      tag:
+        type: string
+      vulnerability:
+        type: string
+    type: object
+  docker.ImageDetail:
+    properties:
+      architecture:
+        type: string
+      author:
+        type: string
+      cmd:
+        items:
+          type: string
+        type: array
+      container:
+        type: string
+      created:
+        type: string
+      docker_version:
+        type: string
+      entrypoint:
+        items:
+          type: string
+        type: array
+      env:
+        items:
+          type: string
+        type: array
+      exposed_ports:
+        additionalProperties:
+          type: object
+        type: object
+      history:
+        items:
+          $ref: '#/definitions/docker.ImageHistory'
+        type: array
+      id:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      layers:
+        items:
+          type: string
+        type: array
+      os:
+        type: string
+      repo_digests:
+        items:
+          type: string
+        type: array
+      repo_tags:
+        items:
+          type: string
+        type: array
+      shared_size:
+        type: integer
+      size:
+        type: integer
+      virtual_size:
+        type: integer
+      volumes:
+        additionalProperties:
+          type: object
+        type: object
+      working_dir:
+        type: string
+    type: object
+  docker.ImageHistory:
+    properties:
+      comment:
+        type: string
+      created:
+        type: string
+      created_by:
+        type: string
+      empty_layer:
+        type: boolean
+    type: object
+  docker.Mount:
+    properties:
+      destination:
+        type: string
+      mode:
+        type: string
+      rw:
+        type: boolean
+      source:
+        type: string
+      type:
+        type: string
+    type: object
+  docker.NetworkSettings:
+    properties:
+      endpoint_id:
+        type: string
+      gateway:
+        type: string
+      ip_address:
+        type: string
+      mac_address:
+        type: string
+      network_id:
+        type: string
+      network_name:
+        type: string
+      port_mappings:
+        items:
+          $ref: '#/definitions/docker.PortMapping'
+        type: array
+      subnet_mask:
+        type: string
+      subnet_prefix:
+        type: string
+    type: object
+  docker.PortMapping:
+    properties:
+      container_port:
+        type: string
+      host_port:
+        type: string
+      protocol:
+        type: string
+    type: object
   response.Response:
     properties:
       data: {}
@@ -238,6 +459,129 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get Docker container information
+      tags:
+      - docker
+  /docker/container/{container_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific Docker container
+        using docker inspect
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Container ID
+        in: path
+        name: container_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Docker container details retrieved successfully
+          schema:
+            $ref: '#/definitions/docker.ContainerDetail'
+        "400":
+          description: Invalid container ID
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Container not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get detailed Docker container information
+      tags:
+      - docker
+  /docker/image/{image_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific Docker image using
+        docker image inspect
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Image ID or name:tag
+        in: path
+        name: image_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Docker image details retrieved successfully
+          schema:
+            $ref: '#/definitions/docker.ImageDetail'
+        "400":
+          description: Invalid image ID
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Image not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get detailed Docker image information
+      tags:
+      - docker
+  /docker/images:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves information about all Docker images on the server
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Docker images retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/docker.Image'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Docker images
       tags:
       - docker
   /filesystem/details:
