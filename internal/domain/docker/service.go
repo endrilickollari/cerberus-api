@@ -22,6 +22,15 @@ type SessionRepository interface {
 type Service interface {
 	// GetContainers retrieves information about Docker containers
 	GetContainers(ctx context.Context, sessionID string) ([]Container, error)
+
+	// GetContainerDetail retrieves detailed information about a specific Docker container
+	GetContainerDetail(ctx context.Context, sessionID string, containerID string) (*ContainerDetail, error)
+
+	// GetImages retrieves information about Docker images
+	GetImages(ctx context.Context, sessionID string) ([]Image, error)
+
+	// GetImageDetail retrieves detailed information about a specific Docker image
+	GetImageDetail(ctx context.Context, sessionID string, imageID string) (*ImageDetail, error)
 }
 
 type service struct {
@@ -58,73 +67,131 @@ func parseDockerContainers(dockerOutput string) []Container {
 			continue
 		}
 
-		// Docker ps output can be tricky to parse due to variable spacing
-		// Using a more robust approach
+		// Docker ps output structure (typical format):
+		// CONTAINER ID   IMAGE                COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+		// 7988d999ba23   dengu-api-test:latest   "docker-entrypoint.s…"   4 days ago      Up 4 days       80/tcp                                      my-container
 
-		// First, get the container ID (first column)
+		// Extract container ID (first field)
 		fields := strings.Fields(line)
-		if len(fields) < 7 {
+		if len(fields) < 4 { // Need at least ID, image, command, and created
 			continue
 		}
 
 		containerID := fields[0]
+		image := fields[1]
 
-		// Find indices for known columns to better handle spacing
-		idxOfImage := strings.Index(line[len(containerID):], " ") + len(containerID)
-		line = strings.TrimSpace(line[idxOfImage:])
-
-		// Get image
-		fields = strings.Fields(line)
-		image := fields[0]
-		line = strings.TrimSpace(line[len(image):])
-
-		// Get command
-		cmdStart := strings.Index(line, "\"")
+		// Extract command - look for quoted text
 		var command string
-		if cmdStart >= 0 {
-			cmdEnd := strings.Index(line[cmdStart+1:], "\"")
-			if cmdEnd >= 0 {
-				command = line[cmdStart+1 : cmdStart+1+cmdEnd]
-				line = strings.TrimSpace(line[cmdStart+cmdEnd+2:])
+		var cmdEndIndex int
+
+		// Find start and end of command (it's usually in quotes)
+		cmdStartIndex := strings.Index(line, "\"")
+		if cmdStartIndex >= 0 {
+			// Find the closing quote
+			cmdEndIndex = strings.Index(line[cmdStartIndex+1:], "\"")
+			if cmdEndIndex >= 0 {
+				cmdEndIndex += cmdStartIndex + 1 // Adjust for the offset in the substring
+				command = line[cmdStartIndex+1 : cmdEndIndex]
 			}
-		} else {
-			// If no quotes, just take the next field
-			fields = strings.Fields(line)
-			command = fields[0]
-			line = strings.TrimSpace(line[len(command):])
 		}
 
-		// Split remaining fields carefully
-		fields = strings.Fields(line)
-		if len(fields) < 5 {
-			continue
-		}
+		// If we couldn't find a quoted command, try a different approach
+		if command == "" {
+			// Skip ID and image fields to get to where command should be
+			remainingLine := line
+			// Skip container ID
+			remainingLine = strings.TrimSpace(remainingLine[len(containerID):])
+			// Skip image
+			remainingLine = strings.TrimSpace(remainingLine[len(image):])
 
-		// Get status, ports, and name
-		createdOn := fields[0] + " " + fields[1]
-		status := fields[2] + " " + fields[3]
-
-		// For ports, we need to be careful about empty port mappings
-		var ports string
-		var names string
-
-		if strings.Contains(fields[4], "->") {
-			// There's a port mapping
-			ports = fields[4]
-			if len(fields) > 5 {
-				names = fields[5]
+			// Take the next chunk as command
+			cmdFields := strings.Fields(remainingLine)
+			if len(cmdFields) > 0 {
+				command = cmdFields[0]
+				// Remove any quote characters
+				command = strings.Trim(command, "\"")
 			}
-		} else {
-			// No port mapping
-			ports = ""
-			names = fields[4]
 		}
 
+		// Try to extract the full command using docker inspect as fallback
+		// Note: This would require additional code to execute docker inspect
+
+		// Extract created time and status, which can vary in format
+		remainingFields := fields[2:] // Skip ID and image
+		var createdTime, status string
+		var i int
+
+		// Skip the command if we already parsed it
+		if cmdStartIndex >= 0 && cmdEndIndex >= 0 {
+			// Find which field index corresponds to after the command
+			for i = 0; i < len(remainingFields); i++ {
+				if strings.Contains(remainingFields[i], "\"") && strings.HasSuffix(remainingFields[i], "\"") {
+					// This is the end of the command
+					i++
+					break
+				}
+			}
+			remainingFields = remainingFields[i:]
+		} else if command != "" {
+			// Skip the field we identified as the command
+			remainingFields = remainingFields[1:]
+		}
+
+		// Parse created time and status
+		if len(remainingFields) >= 4 {
+			// Created time is typically "X time ago" format (e.g., "4 days ago")
+			createdTime = remainingFields[0] + " " + remainingFields[1]
+			if remainingFields[1] != "ago" && len(remainingFields) > 2 && remainingFields[2] == "ago" {
+				createdTime += " " + remainingFields[2]
+				// Status typically starts with "Up" or "Exited"
+				status = strings.Join(remainingFields[3:], " ")
+			} else {
+				// If "ago" is not a separate field, then status starts right after "created"
+				status = strings.Join(remainingFields[2:], " ")
+			}
+		}
+
+		// Extract ports and names from status
+		var ports, names string
+		statusFields := strings.Fields(status)
+
+		// Ports and names are the last fields - extract them
+		if len(statusFields) >= 2 {
+			// Check if there's a port mapping
+			portIndex := -1
+			for i, field := range statusFields {
+				if strings.Contains(field, "->") || strings.Contains(field, ":") || strings.HasSuffix(field, "/tcp") || strings.HasSuffix(field, "/udp") {
+					portIndex = i
+					break
+				}
+			}
+
+			if portIndex >= 0 {
+				// We found a port
+				ports = statusFields[portIndex]
+
+				// The name is likely the last field
+				if portIndex < len(statusFields)-1 {
+					names = statusFields[len(statusFields)-1]
+				}
+
+				// Recalculate status without ports and names
+				status = strings.Join(statusFields[:portIndex], " ")
+			} else {
+				// No port mapping, the last field is probably the name
+				names = statusFields[len(statusFields)-1]
+
+				// Recalculate status without the name
+				status = strings.Join(statusFields[:len(statusFields)-1], " ")
+			}
+		}
+
+		// Create the container object
 		container := Container{
 			ContainerID: containerID,
 			Image:       image,
 			Command:     command,
-			CreatedOn:   createdOn,
+			CreatedOn:   createdTime,
 			Status:      status,
 			Ports:       ports,
 			Names:       names,
