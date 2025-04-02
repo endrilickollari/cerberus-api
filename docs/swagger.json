@@ -9,58 +9,6 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/docker/container-details": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Retrieves information about Docker containers from the server",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "docker"
-                ],
-                "summary": "Get Docker container information",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer \u003ctoken\u003e",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Docker container information retrieved successfully",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/docker.Container"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/docker/container/{container_id}": {
             "get": {
                 "security": [
@@ -129,6 +77,128 @@
                 }
             }
         },
+        "/docker/containers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves information about Docker containers from the server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Get Docker container information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Docker container information retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/docker.Container"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/docker/image/run": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates and runs a new Docker container from an image with optional configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Run a Docker container",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Container configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/docker.ContainerRunRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Container created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/docker.ContainerRunResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Image not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/docker/image/{image_id}": {
             "get": {
                 "security": [
@@ -184,6 +254,73 @@
                     },
                     "404": {
                         "description": "Image not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes a Docker image by ID or name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docker"
+                ],
+                "summary": "Delete a Docker image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003ctoken\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Image ID or name:tag",
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Force deletion even if image is being used by containers",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Docker image deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/docker.ImageDeleteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid image ID or name",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -877,6 +1014,87 @@
                 }
             }
         },
+        "docker.ContainerRunRequest": {
+            "type": "object",
+            "required": [
+                "image"
+            ],
+            "properties": {
+                "command": {
+                    "description": "Command to run (overrides default)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "detached": {
+                    "description": "Run in detached mode",
+                    "type": "boolean",
+                    "default": true
+                },
+                "environment": {
+                    "description": "Environment variables",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "image": {
+                    "description": "Docker image to run",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Optional container name",
+                    "type": "string"
+                },
+                "network": {
+                    "description": "Network to connect to",
+                    "type": "string"
+                },
+                "ports": {
+                    "description": "Port mappings",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/docker.PortMapping"
+                    }
+                },
+                "restart": {
+                    "description": "Restart policy (no, always, on-failure, unless-stopped)",
+                    "type": "string"
+                },
+                "volumes": {
+                    "description": "Volume mappings",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/docker.VolumeMapping"
+                    }
+                }
+            }
+        },
+        "docker.ContainerRunResponse": {
+            "type": "object",
+            "properties": {
+                "container_id": {
+                    "description": "ID of the created container",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the container",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Container status (e.g., \"created\", \"running\")",
+                    "type": "string"
+                },
+                "warnings": {
+                    "description": "Any warnings generated during container creation",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "docker.ContainerState": {
             "type": "object",
             "properties": {
@@ -964,6 +1182,32 @@
                 },
                 "vulnerability": {
                     "type": "string"
+                }
+            }
+        },
+        "docker.ImageDeleteResponse": {
+            "type": "object",
+            "properties": {
+                "deleted": {
+                    "description": "List of deleted image layers",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "errors": {
+                    "description": "List of errors encountered during deletion",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "untagged": {
+                    "description": "List of untagged images",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1148,6 +1392,24 @@
                 },
                 "protocol": {
                     "type": "string"
+                }
+            }
+        },
+        "docker.VolumeMapping": {
+            "type": "object",
+            "properties": {
+                "container_path": {
+                    "description": "Path in the container",
+                    "type": "string"
+                },
+                "host_path": {
+                    "description": "Path on the host",
+                    "type": "string"
+                },
+                "read_only": {
+                    "description": "Mount as read-only",
+                    "type": "boolean",
+                    "default": false
                 }
             }
         },

@@ -3,10 +3,10 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"remote-server-api/internal/domain/docker"
 	"strings"
 
 	"remote-server-api/internal/api/response"
-	"remote-server-api/internal/domain/docker"
 )
 
 // GetContainerDetail GetContainerDetailHandler returns detailed information about a specific Docker container

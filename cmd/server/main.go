@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	dockerDomain "remote-server-api/internal/domain/docker"
 	"syscall"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"remote-server-api/internal/api/router"
 	"remote-server-api/internal/api/server"
 	"remote-server-api/internal/domain/auth"
-	dockerDomain "remote-server-api/internal/domain/docker"
 	serverDomain "remote-server-api/internal/domain/server"
 	"remote-server-api/internal/infrastructure/persistence/memory"
 	"remote-server-api/internal/infrastructure/ssh"

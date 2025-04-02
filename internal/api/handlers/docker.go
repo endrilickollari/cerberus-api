@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-
 	"remote-server-api/internal/api/response"
 	"remote-server-api/internal/domain/docker"
 )
@@ -32,7 +31,7 @@ func NewDockerHandler(dockerService docker.Service) *DockerHandler {
 // @Success 200 {array} docker.Container "Docker container information retrieved successfully"
 // @Failure 401 {object} response.Response "Unauthorized"
 // @Failure 500 {object} response.Response "Internal server error"
-// @Router /docker/container-details [get]
+// @Router /docker/containers [get]
 func (h *DockerHandler) GetContainerInfo(w http.ResponseWriter, r *http.Request) {
 	// Get session ID from context
 	sessionID, ok := r.Context().Value(SessionIDKey).(string)

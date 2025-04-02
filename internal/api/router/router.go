@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"remote-server-api/internal/domain/docker"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,7 +13,6 @@ import (
 	_ "remote-server-api/docs" // Import for swagger docs
 	"remote-server-api/internal/api/handlers"
 	"remote-server-api/internal/domain/auth"
-	"remote-server-api/internal/domain/docker"
 	"remote-server-api/internal/domain/server"
 )
 
@@ -78,6 +78,8 @@ func New(
 			r.Get("/container/{container_id}", dockerHandler.GetContainerDetail)
 			r.Get("/images", dockerHandler.GetImages)
 			r.Get("/image/{image_id}", dockerHandler.GetImageDetail)
+			r.Post("/image/run", dockerHandler.RunContainer)
+			r.Delete("/image/{image_id}", dockerHandler.DeleteImage)
 		})
 
 		// Docker routes
