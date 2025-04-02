@@ -31,6 +31,12 @@ type Service interface {
 
 	// GetImageDetail retrieves detailed information about a specific Docker image
 	GetImageDetail(ctx context.Context, sessionID string, imageID string) (*ImageDetail, error)
+
+	// DeleteImage deletes a Docker image
+	DeleteImage(ctx context.Context, sessionID string, imageID string, force bool) (*ImageDeleteResponse, error)
+
+	// RunContainer runs a Docker container from an image
+	RunContainer(ctx context.Context, sessionID string, request ContainerRunRequest) (*ContainerRunResponse, error)
 }
 
 type service struct {
@@ -66,10 +72,6 @@ func parseDockerContainers(dockerOutput string) []Container {
 		if line == "" {
 			continue
 		}
-
-		// Docker ps output structure (typical format):
-		// CONTAINER ID   IMAGE                COMMAND                  CREATED          STATUS          PORTS                                       NAMES
-		// 7988d999ba23   dengu-api-test:latest   "docker-entrypoint.s…"   4 days ago      Up 4 days       80/tcp                                      my-container
 
 		// Extract container ID (first field)
 		fields := strings.Fields(line)
@@ -112,9 +114,6 @@ func parseDockerContainers(dockerOutput string) []Container {
 				command = strings.Trim(command, "\"")
 			}
 		}
-
-		// Try to extract the full command using docker inspect as fallback
-		// Note: This would require additional code to execute docker inspect
 
 		// Extract created time and status, which can vary in format
 		remainingFields := fields[2:] // Skip ID and image

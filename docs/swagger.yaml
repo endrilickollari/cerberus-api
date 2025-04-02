@@ -79,6 +79,64 @@ definitions:
       status:
         type: string
     type: object
+  docker.ContainerRunRequest:
+    properties:
+      command:
+        description: Command to run (overrides default)
+        items:
+          type: string
+        type: array
+      detached:
+        default: true
+        description: Run in detached mode
+        type: boolean
+      environment:
+        additionalProperties:
+          type: string
+        description: Environment variables
+        type: object
+      image:
+        description: Docker image to run
+        type: string
+      name:
+        description: Optional container name
+        type: string
+      network:
+        description: Network to connect to
+        type: string
+      ports:
+        description: Port mappings
+        items:
+          $ref: '#/definitions/docker.PortMapping'
+        type: array
+      restart:
+        description: Restart policy (no, always, on-failure, unless-stopped)
+        type: string
+      volumes:
+        description: Volume mappings
+        items:
+          $ref: '#/definitions/docker.VolumeMapping'
+        type: array
+    required:
+    - image
+    type: object
+  docker.ContainerRunResponse:
+    properties:
+      container_id:
+        description: ID of the created container
+        type: string
+      name:
+        description: Name of the container
+        type: string
+      status:
+        description: Container status (e.g., "created", "running")
+        type: string
+      warnings:
+        description: Any warnings generated during container creation
+        items:
+          type: string
+        type: array
+    type: object
   docker.ContainerState:
     properties:
       error:
@@ -137,6 +195,24 @@ definitions:
         type: string
       vulnerability:
         type: string
+    type: object
+  docker.ImageDeleteResponse:
+    properties:
+      deleted:
+        description: List of deleted image layers
+        items:
+          type: string
+        type: array
+      errors:
+        description: List of errors encountered during deletion
+        items:
+          type: string
+        type: array
+      untagged:
+        description: List of untagged images
+        items:
+          type: string
+        type: array
     type: object
   docker.ImageDetail:
     properties:
@@ -258,6 +334,19 @@ definitions:
         type: string
       protocol:
         type: string
+    type: object
+  docker.VolumeMapping:
+    properties:
+      container_path:
+        description: Path in the container
+        type: string
+      host_path:
+        description: Path on the host
+        type: string
+      read_only:
+        default: false
+        description: Mount as read-only
+        type: boolean
     type: object
   response.Response:
     properties:
@@ -428,39 +517,6 @@ info:
   title: Cerberus API
   version: 2.0.0
 paths:
-  /docker/container-details:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves information about Docker containers from the server
-      parameters:
-      - description: Bearer <token>
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Docker container information retrieved successfully
-          schema:
-            items:
-              $ref: '#/definitions/docker.Container'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get Docker container information
-      tags:
-      - docker
   /docker/container/{container_id}:
     get:
       consumes:
@@ -506,7 +562,84 @@ paths:
       summary: Get detailed Docker container information
       tags:
       - docker
+  /docker/containers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves information about Docker containers from the server
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Docker container information retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/docker.Container'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Docker container information
+      tags:
+      - docker
   /docker/image/{image_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a Docker image by ID or name
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Image ID or name:tag
+        in: path
+        name: image_id
+        required: true
+        type: string
+      - default: false
+        description: Force deletion even if image is being used by containers
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Docker image deleted successfully
+          schema:
+            $ref: '#/definitions/docker.ImageDeleteResponse'
+        "400":
+          description: Invalid image ID or name
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a Docker image
+      tags:
+      - docker
     get:
       consumes:
       - application/json
@@ -549,6 +682,52 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get detailed Docker image information
+      tags:
+      - docker
+  /docker/image/run:
+    post:
+      consumes:
+      - application/json
+      description: Creates and runs a new Docker container from an image with optional
+        configuration
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Container configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/docker.ContainerRunRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Container created successfully
+          schema:
+            $ref: '#/definitions/docker.ContainerRunResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Image not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Run a Docker container
       tags:
       - docker
   /docker/images:

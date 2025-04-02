@@ -3,10 +3,10 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"remote-server-api/internal/domain/docker"
 	"strings"
 
 	"remote-server-api/internal/api/response"
-	"remote-server-api/internal/domain/docker"
 )
 
 // GetImageDetail GetImageDetailHandler returns detailed information about a specific Docker image
