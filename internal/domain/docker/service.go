@@ -53,7 +53,7 @@ func NewService(sessionRepo SessionRepository) Service {
 // GetContainers implements the Service interface
 func (s *service) GetContainers(ctx context.Context, sessionID string) ([]Container, error) {
 	// Execute command to get Docker containers
-	dockerOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, "docker ps")
+	dockerOutput, err := s.sessionRepo.RunCommand(ctx, sessionID, "docker ps -a")
 	if err != nil {
 		return nil, err
 	}
